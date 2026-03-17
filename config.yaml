@@ -84,7 +84,7 @@ chains:
       - name: MetaMorpho
       - name: AdaptiveCurveIRM
         address:
-          - 0x305D2830F0bFf6f398f141550CaC54A1564aD4Af
+          - 0x305D2830F0bFf6f398f141550CaC54A1564aD4Af 
       - name: PreLiquidationFactory
         address:
           - 0xF4Ca30B7a5057E4E35aD3c96f99753e344bDca7d
