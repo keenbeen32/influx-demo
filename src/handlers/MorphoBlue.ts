@@ -32,7 +32,7 @@ Morpho.SetFee.handler(async ({ event, context }) => {
   const id = marketId(event.chainId, event.params.id);
   const existing = await context.Market.getOrThrow(id);
 
-  context.Market.set({
+  context.Market.set({ 
     ...existing,
     fee: event.params.newFee,
     lastUpdate: BigInt(event.block.timestamp),
