@@ -5,8 +5,8 @@ raw_events: true
 
 contracts:
   - name: Morpho
-    abi_file_path: ./abis/MorphoBlue.json
-    handler: ./src/handlers/MorphoBlue.ts
+    abi_file_path: ./abis/Morpho.json
+    handler: ./src/handlers/Morpho.ts
     events:
       - event: "CreateMarket(bytes32 indexed id, (address, address, address, address, uint256) marketParams)"
       - event: "SetFee(bytes32 indexed id, uint256 newFee)"
