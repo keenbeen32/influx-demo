@@ -1,21 +1,24 @@
 import { createEffect, S } from "envio";
 import { createPublicClient, http, parseAbi } from "viem";
 
-const ERC20_ABI = parseAbi(["function decimals() view returns (uint8)"]);
+const ORACLE_ABI = parseAbi([
+  "function price() view returns (uint256)",
+]);
 
-// Injective-only indexer: keep a single RPC mapping.
 const RPC_URLS: Record<number, string> = {
   1776: process.env.RPC_URL_1776 ?? "https://injective.drpc.org",
 };
 
-export const getDecimals = createEffect(
+export const getOraclePrice = createEffect(
   {
-    name: "getDecimals",
+    name: "getOraclePrice",
     input: S.schema({
-      address: S.string,
+      oracleAddress: S.string,
       chainId: S.number,
     }),
-    output: S.number,
+    output: S.schema({
+      price: S.string, // BigInt as string for serialization
+    }),
     cache: false,
     rateLimit: false,
   },
@@ -27,15 +30,15 @@ export const getDecimals = createEffect(
         transport: http(rpcUrl),
       });
 
-      const decimals = await client.readContract({
-        address: input.address as `0x${string}`,
-        abi: ERC20_ABI,
-        functionName: "decimals",
+      const price = await client.readContract({
+        address: input.oracleAddress as `0x${string}`,
+        abi: ORACLE_ABI,
+        functionName: "price",
       });
-      return Number(decimals);
-    } catch(e) {
-      console.error(e)
-      return 18;
+
+      return { price: price.toString() };
+    } catch {
+      return { price: "0" };
     }
   },
 );

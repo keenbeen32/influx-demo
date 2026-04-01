@@ -1,3 +1,22 @@
+type Token {
+  id: ID! # "{chainId}-{address}"
+  chainId: Int!
+  address: String! @index
+  symbol: String!
+  decimals: Int!
+  name: String!
+  priceUsd: BigDecimal! @config(precision: 30, scale: 18)
+  icon: String!
+  category: String!
+}
+
+type GlobalState {
+  id: ID! # "global"
+  marketIds: Json! # string[]
+  vaultIds: Json! # string[]
+  tokenIds: Json! # string[]
+}
+
 type Market {
   id: ID!
   chainId: Int!
@@ -21,12 +40,36 @@ type Market {
   # AdaptiveCurveIrm fields
   rateAtTarget: BigInt!
 
+  # APY fields (Step 2)
+  borrowRatePerSecond: BigInt!
+  currentBorrowApy: BigDecimal! @config(precision: 30, scale: 18)
+  currentSupplyApy: BigDecimal! @config(precision: 30, scale: 18)
+  currentUtilization: BigDecimal! @config(precision: 30, scale: 18)
+
+  # Oracle price (Step 4)
+  oraclePrice: BigInt!
+
+  # Collateral tracking
+  totalCollateral: BigInt!
+
+  # PublicAllocator shared liquidity
+  publicAllocatorSharedLiquidity: BigInt!
+
+  # IRM curve data
+  irmCurve: Json! # [{ utilization: number, borrowApy: number, supplyApy: number }]
+
+  # Derived fields (Step 5)
+  isIdle: Boolean!
+  liquidityAssets: BigInt!
+
   # Reverse lookups
   positions: [Position!]! @derivedFrom(field: "market_id")
   relatedVaultConfigs: [VaultConfigItem!]! @derivedFrom(field: "market_id")
   relatedVaultSupplyQueues: [VaultSupplyQueueItem!]! @derivedFrom(field: "market_id")
   relatedVaultWithdrawQueues: [VaultWithdrawQueueItem!]! @derivedFrom(field: "market_id")
   relatedPreLiquidationContracts: [PreLiquidationContract!]! @derivedFrom(field: "market_id")
+  flowCaps: [FlowCap!]! @derivedFrom(field: "market_id")
+  snapshots: [MarketSnapshot!]! @derivedFrom(field: "market_id")
 }
 
 type Position {
@@ -95,6 +138,7 @@ type Vault {
   lostAssets: BigInt!
   name: String!
   symbol: String!
+  description: String!
 
   # Reverse lookups
   balances: [VaultBalance!]! @derivedFrom(field: "vault_id")
@@ -139,4 +183,39 @@ type VaultWithdrawQueueItem {
   vault_id: String! @index
   ordinal: Int!
   market_id: String @index
+}
+
+type FlowCap {
+  id: ID! # "{chainId}-{vaultAddress}-{marketId}"
+  chainId: Int!
+  vault: String! @index
+  market_id: String! @index
+  maxIn: BigInt!
+  maxOut: BigInt!
+}
+
+type MarketSnapshot {
+  id: ID! # "{chainId}-{marketId}-{blockNumber}"
+  chainId: Int!
+  market_id: String! @index
+  blockNumber: Int! @index
+  lastUpdate: BigInt! # unix timestamp from Market.lastUpdate
+  totalSupplyAssets: BigInt!
+  totalBorrowAssets: BigInt!
+  totalCollateral: BigInt!
+  borrowApy: BigDecimal! @config(precision: 30, scale: 18)
+  supplyApy: BigDecimal! @config(precision: 30, scale: 18)
+  utilization: BigDecimal! @config(precision: 30, scale: 18)
+  rateAtTarget: BigInt!
+}
+
+type VaultSnapshot {
+  id: ID! # "{chainId}-{vaultAddress}-{blockNumber}"
+  chainId: Int!
+  vault_id: String! @index
+  blockNumber: Int! @index
+  lastUpdate: BigInt! # best available timestamp proxy
+  totalAssets: BigInt!
+  totalSupply: BigInt!
+  supplyApy: BigDecimal! @config(precision: 30, scale: 18)
 }

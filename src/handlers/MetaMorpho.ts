@@ -1,5 +1,5 @@
-import { MetaMorphoFactory, MetaMorpho } from "generated";
-import { getDecimals } from "../effects/getDecimals.js";
+import { MetaMorphoFactory, MetaMorpho, BigDecimal } from "generated";
+import { getTokenMetadata } from "../effects/getTokenMetadata.js";
 import {
   ZERO_ADDRESS,
   vaultId,
@@ -7,7 +7,11 @@ import {
   vaultConfigItemId,
   vaultQueueItemId,
   marketId,
+  tokenId,
+  GLOBAL_STATE_ID,
 } from "../utils/ids.js";
+
+const ZERO_BD = BigDecimal("0");
 
 /*//////////////////////////////////////////////////////////////
                         CONTRACT REGISTER
@@ -22,11 +26,31 @@ MetaMorphoFactory.CreateMetaMorpho.contractRegister(({ event, context }) => {
 //////////////////////////////////////////////////////////////*/
 
 MetaMorphoFactory.CreateMetaMorpho.handler(async ({ event, context }) => {
-  const decimalsUnderlying = await context.effect(getDecimals, {
+  const meta = await context.effect(getTokenMetadata, {
     address: event.params.asset,
     chainId: event.chainId,
   });
+  const decimalsUnderlying = meta.decimals;
   const decimalsOffset = Math.max(0, 18 - decimalsUnderlying);
+
+  // Upsert Token entity for vault asset
+  const tId = tokenId(event.chainId, event.params.asset);
+  const existingToken = await context.Token.get(tId);
+  let newTokenId: string | undefined;
+  if (!existingToken) {
+    context.Token.set({
+      id: tId,
+      chainId: event.chainId,
+      address: event.params.asset,
+      name: meta.name,
+      symbol: meta.symbol,
+      decimals: meta.decimals,
+      priceUsd: ZERO_BD,
+      icon: "",      // TODO: populate from static token metadata config
+      category: "",  // TODO: populate from static token metadata config
+    });
+    newTokenId = tId;
+  }
 
   const id = vaultId(event.chainId, event.params.metaMorpho);
 
@@ -57,6 +81,19 @@ MetaMorphoFactory.CreateMetaMorpho.handler(async ({ event, context }) => {
     lostAssets: 0n,
     name: event.params.name,
     symbol: event.params.symbol,
+    description: "", // TODO: populate from off-chain vault metadata config
+  });
+
+  // Update GlobalState to track this vault and new token
+  const gs = await context.GlobalState.get(GLOBAL_STATE_ID);
+  const existingTokenIds = gs ? (gs.tokenIds as string[]) : [];
+  context.GlobalState.set({
+    id: GLOBAL_STATE_ID,
+    marketIds: gs ? gs.marketIds : [],
+    vaultIds: [...(gs ? (gs.vaultIds as string[]) : []), id],
+    tokenIds: newTokenId
+      ? [...existingTokenIds, newTokenId]
+      : existingTokenIds,
   });
 });
 

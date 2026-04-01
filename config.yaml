@@ -69,6 +69,12 @@ contracts:
     events:
       - event: "CreatePreLiquidation(address indexed preLiquidation, bytes32 id, (uint256, uint256, uint256, uint256, uint256, address) preLiquidationParams)"
 
+  - name: PublicAllocator
+    abi_file_path: ./abis/PublicAllocator.json
+    handler: ./src/handlers/PublicAllocator.ts
+    events:
+      - event: "SetFlowCaps(address indexed sender, address indexed vault, (bytes32, (uint128, uint128))[] config)"
+
 chains:
   - id: 1776 # injective
     start_block: 0
@@ -88,3 +94,6 @@ chains:
       - name: PreLiquidationFactory
         address:
           - 0xF4Ca30B7a5057E4E35aD3c96f99753e344bDca7d
+      - name: PublicAllocator
+        address:
+          - 0x1B8516ac99bc0EE821Db625C90F4eAA034696E6b

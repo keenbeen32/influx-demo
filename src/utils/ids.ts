@@ -55,3 +55,31 @@ export function vaultQueueItemId(
 ): string {
   return `${chainId}-${vaultAddress}-${ordinal}`;
 }
+
+export function flowCapId(
+  chainId: number,
+  vaultAddress: string,
+  marketId: string,
+): string {
+  return `${chainId}-${vaultAddress}-${marketId}`;
+}
+
+export function tokenId(chainId: number, address: string): string {
+  return `${chainId}-${address}`;
+}
+
+export function marketSnapshotId(
+  marketEntityId: string,
+  blockNumber: number,
+): string {
+  return `${marketEntityId}-${blockNumber}`;
+}
+
+export function vaultSnapshotId(
+  vaultEntityId: string,
+  blockNumber: number,
+): string {
+  return `${vaultEntityId}-${blockNumber}`;
+}
+
+export const GLOBAL_STATE_ID = "global";
